@@ -1,0 +1,14 @@
+*
+
+# But not these files
+!.gitignore
+!main.cpp
+!CMakeLists.txt
+
+# Allow Modules folder and its contents
+!Modules/
+!Modules/**
+
+# Allow Modules folder and its contents
+!unordered_dense/
+!unordered_dense/**
