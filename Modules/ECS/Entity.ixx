@@ -1,5 +1,6 @@
 module;
 #include "ankerl/unordered_dense.h"
+#include <immintrin.h>
 export module Entity;
 
 import std;

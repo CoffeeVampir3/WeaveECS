@@ -68,9 +68,9 @@ int main() {
     std::print("\n\n");
 
     auto start = std::chrono::high_resolution_clock::now();
-    for (auto& entity : EntityManager->entitiesWith<Cat, Snail>())
+    for (auto& entity : EntityManager->entitiesWith<Cat>())
     {
-        auto [whale, cat] = entity->components<Cat, Snail>();
+        auto [cat] = entity->components<Cat>();
     }
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
