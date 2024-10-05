@@ -9,6 +9,6 @@
 !Modules/
 !Modules/**
 
-# Allow Modules folder and its contents
-!unordered_dense/
-!unordered_dense/**
+# Allow tests
+!Tests/
+!Tests/**

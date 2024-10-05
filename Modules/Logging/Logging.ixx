@@ -9,12 +9,12 @@ export namespace Logging {
     //See <https://en.cppreference.com/w/cpp/io/print> for more details
     template <typename... Args>
     void info(
-        std::format_string<Args...> fmt, 
+        std::format_string<Args...> fmt,
         Args&&... args);
 
     template <typename... Args>
     void infoWithLocation(
-        std::format_string<Args...> fmt, 
+        std::format_string<Args...> fmt,
         const std::source_location& location = std::source_location::current(),
         Args&&... args);
 
@@ -25,13 +25,13 @@ export namespace Logging {
 
     template <typename... Args>
     void warningWithLocation(
-        std::format_string<Args...> fmt, 
+        std::format_string<Args...> fmt,
         const std::source_location& location = std::source_location::current(),
         Args&&... args);
 
     template <typename... Args>
     void failure(
-        std::format_string<Args...> fmt, 
+        std::format_string<Args...> fmt,
         const std::source_location& location = std::source_location::current(),
         Args&&... args);
 
@@ -87,6 +87,7 @@ namespace Logging {
     void logWithLocation(
         std::format_string<Args...> fmt, 
         const std::source_location& location,
+        std::ostream& outputStream = std::cout,
         Args&&... args) {
         if constexpr (!meetsMinimumSeverity(S, minimumLoggingSeverity)) {
             return;
@@ -100,7 +101,7 @@ namespace Logging {
         std::string content = std::format(fmt, std::forward<Args>(args)...);
 
         if constexpr (loggingToConsoleEnabled) {
-            std::print(
+            std::print(outputStream,
                 "[{:%Y-%m-%d %H:%M:%S}]\n {}[{}]{}\nFile name: {}\nFunction name: {}\nLine error: {}\n{}\n", 
                 now, 
                 severityColor, 
@@ -156,5 +157,17 @@ namespace Logging {
     template <typename... Args>
     void failure(std::format_string<Args...> fmt, const std::source_location& location, Args&&... args) {
         logWithLocation<Severity::Failure>(fmt, location, std::forward<Args>(args)...);
+    }
+
+    export template <typename... Args>
+    void assert(
+        bool condition,
+        std::format_string<Args...> fmt,
+        const std::source_location& location = std::source_location::current(),
+        Args&&... args)
+    {
+        if (condition) return;
+        logWithLocation<Severity::Failure>(fmt, location, std::cerr, std::forward<Args>(args)...);
+        std::abort();
     }
 }

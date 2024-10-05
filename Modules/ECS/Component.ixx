@@ -4,14 +4,19 @@ import std;
 
 export namespace Ecs {
     typedef unsigned long long ComponentId;
+    typedef unsigned long long EntityId;
+    constexpr ComponentId invalidId = 0u;
 
     class ComponentManager;
     struct Component
     {
         friend ComponentManager;
         inline ComponentId Id() const { return id; }
+        inline EntityId Entity() const { return owningEntityId; }
+
     private:
-        ComponentId id = 0;
+        ComponentId id = invalidId;
+        EntityId owningEntityId = invalidId;
     };
 
     template<typename T>
@@ -23,7 +28,7 @@ export namespace Ecs {
 
     class ComponentManager
     {
-        ComponentId nextId{0};
+        ComponentId nextId{invalidId};
         std::unordered_map<ComponentId, std::size_t> componentIdMap;
     public:
         static ComponentManager* Instance()
@@ -37,15 +42,38 @@ export namespace Ecs {
             return instance;
         }
         template <ComponentType compType>
-        ComponentId addComponent(compType&& newComp)
+        ComponentId addComponent(EntityId ownerId, compType&& newComp)
         {
             ComponentId newComponentId = ++nextId;
             newComp.id = newComponentId;
+            newComp.owningEntityId = ownerId;
             components<std::remove_reference_t<compType>>.emplace_back(std::forward<compType>(newComp));
             int lastIndex = components<compType>.size() - 1;
 
             componentIdMap[newComponentId] = lastIndex;
             return newComponentId;
+        }
+
+        ///A function for tests to ensure properties of the ID map.
+        std::size_t testing_getComponentIdMapCount()
+        {
+            return componentIdMap.size();
+        }
+
+        template <ComponentType compType>
+        std::size_t count()
+        {
+            return components<compType>.size();
+        }
+
+        template <ComponentType compType>
+        void clear()
+        {
+            for (auto& component : components<compType>)
+            {
+                componentIdMap.erase(component.id);
+            }
+            components<compType>.clear();
         }
 
         template <ComponentType compType>
@@ -119,12 +147,12 @@ export namespace Ecs {
             return ComponentManager::Instance()->getComponent<compType>(id);
         }
 
-        void reset()
+        constexpr void reset()
         {
-            id = 0;
+            id = invalidId;
         }
 
     private:
-        ComponentId id = 0;
+        ComponentId id = invalidId;
     };
 }

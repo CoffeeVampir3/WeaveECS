@@ -1,5 +1,6 @@
 import std;
 import Component;
+import Entity;
 
 struct Whale : Ecs::Component
 {
@@ -12,58 +13,45 @@ struct Snail : Ecs::Component
     Ecs::CompRef<Whale> whaleRef;
 };
 
+struct Cat : Ecs::Component
+{
+    std::string name = "Smail";
+    Ecs::CompRef<Whale> whaleRef;
+};
+
 int main() {
-    auto componentManager = Ecs::ComponentManager::Instance();
-    componentManager->addComponent(Whale{.test = 31});
-    componentManager->addComponent(Whale{.test = 5});
-    componentManager->addComponent(Snail{.whaleRef = 2});
-    componentManager->addComponent(Snail{.name = "mail"});
+    auto EntityManager = Ecs::EntityManager();
 
-    auto& snails = componentManager->getComponents<Snail>();
+    auto one = EntityManager
+        .newEntity()
+        .addComponent(Whale{.test = 3})
+        .addComponent(Snail{.name = "Jim", .whaleRef = 1})
+        .addComponent(Cat{.name = "cat", .whaleRef = 3});
 
-    auto krale = Snail{.whaleRef = 2};
+    std::print("one {}\n", one.ArchetypeBits());
 
-    for (auto& snail : snails)
-    {
-        std::print("\nSnail found with name: {} {}", snail.name, snail.Id());
-        std::print("\nSnail ref id is: {}", snail.whaleRef.Id());
+    auto two = EntityManager
+        .newEntity()
+        .addComponent(Whale{.test = 15})
+        .addComponent(Snail{.name = "Swag", .whaleRef = 3})
+        .addComponent(Cat{.name = "cat", .whaleRef = 3});
 
-        if (snail.whaleRef == krale.whaleRef)
-        {
-            std::print("Equal");
-        }
+    std::print("two {}\n", two.ArchetypeBits());
 
-        if (snail.whaleRef != krale.whaleRef)
-        {
-            std::print("Not equal");
-        }
+    auto three = EntityManager
+        .newEntity()
+        .addComponent(Whale{.test = 25})
+        .addComponent(Snail{.name = "f", .whaleRef = 5});
 
-        if (auto theWhale = snail.whaleRef.get())
-        {
-            std::print("Had whale, id: {} Whale test: {}", theWhale->Id(), theWhale->test);
-        } else
-        {
-            std::print("Snail did not have whale");
-        }
-    }
+    std::print("three {}\n", three.ArchetypeBits());
 
     std::print("\n\n");
 
-    componentManager->destroyComponent<Snail>(3);
-    componentManager->addComponent(Snail{.name = "pail"});
-    componentManager->destroyComponent<Snail>(4);
-    componentManager->addComponent(Snail{.name = "Quale"});
-    componentManager->addComponent(Snail{.name = "meeal"});
-    componentManager->addComponent(Whale{.test = 8});
-    for (auto& snail : snails)
+    for (auto entity : EntityManager.getEntitiesOf<Whale, Snail>())
     {
-        std::print("\nSnail found with name: {}", snail.name);
+        auto [whale, snail] = entity->getComponents<Whale, Snail>();
+        std::print("{} {}", whale->test, snail->name);
+        std::print("{}\n\n", entity->ArchetypeBits());
     }
-
-    for (auto& whales = componentManager->getComponents<Whale>(); auto& whale : whales)
-    {
-        std::print("\nWhale found with id: {}", whale.Id());
-    }
-
     return -1;
 }
