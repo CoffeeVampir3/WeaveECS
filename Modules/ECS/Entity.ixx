@@ -65,7 +65,6 @@ export namespace Ecs
 
     struct Entity;
     class EntityManager {
-    private:
         ComponentId nextId = 0;
         ArchetypeMap archetypeMap;
         std::vector<Entity> entities;
@@ -87,19 +86,7 @@ export namespace Ecs
 
         void deleteEntity(EntityId idToDestroy);
 
-        // Helper functions that were previously in Entity
-        template <ComponentType compType>
-        void addComponentToEntity(Entity& entity, compType&& newComponent);
-
-        template <ComponentType compType>
-        compType* getComponentFromEntity(const Entity& entity);
-
-        template<ComponentType... compTypes>
-        std::tuple<compTypes*...> getComponentsFromEntity(const Entity& entity);
-
         ComponentMap& componentMap(EntityId id);
-
-        BitsetUint getEntityArchetypeBits(const Entity& entity) const;
     };
 
     struct Entity {
