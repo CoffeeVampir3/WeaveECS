@@ -36,7 +36,7 @@ int main() {
         .addComponent(Snail{.name = "Swag", .whaleRef = 3})
         .addComponent(Cat{.name = "mat", .whaleRef = 3});
 
-    // EntityManager->deleteEntity(two.Id());
+    //EntityManager->deleteEntity(two.Id());
 
     two = EntityManager
         ->newEntity()
@@ -56,7 +56,11 @@ int main() {
         EntityManager
             ->newEntity()
             .addComponent(Whale{.test = i})
-            .addComponent(Snail{.name = "f", .whaleRef = 5});
+            .addComponent(Cat{.name = "f", .whaleRef = 5});
+        EntityManager
+            ->newEntity()
+            .addComponent(Cat{})
+            .addComponent(Snail{});
     }
 
     std::print("three {}\n", three.ArchetypeBits());
@@ -64,16 +68,16 @@ int main() {
     std::print("\n\n");
 
     auto start = std::chrono::high_resolution_clock::now();
-    for (auto entity : EntityManager->entitiesWith<Whale, Snail>())
+    for (auto& entity : EntityManager->entitiesWith<Cat, Snail>())
     {
-        auto [whale, cat] = entity->components<Whale, Snail>();
+        auto [whale, cat] = entity->components<Cat, Snail>();
     }
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
     std::print("D: {}\n\n", duration);
 
     start = std::chrono::high_resolution_clock::now();
-    for (auto entity : EntityManager->entitiesWith<Whale, Cat>())
+    for (auto& entity : EntityManager->entitiesWith<Whale, Cat>())
     {
         auto [whale, cat] = entity->components<Whale, Cat>();
     }
@@ -82,9 +86,9 @@ int main() {
     std::print("D: {}\n", duration);
 
     start = std::chrono::high_resolution_clock::now();
-    for (auto entity : EntityManager->entitiesWith<Whale, Snail>())
+    for (auto& entity : EntityManager->entitiesWith<Cat, Snail>())
     {
-        auto [whale, cat] = entity->components<Whale, Snail>();
+        auto [whale, cat] = entity->components<Cat, Snail>();
     }
     end = std::chrono::high_resolution_clock::now();
     duration = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);

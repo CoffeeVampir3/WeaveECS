@@ -1,4 +1,5 @@
 module;
+#include "ankerl/unordered_dense.h"
 export module Component;
 import std;
 
@@ -29,9 +30,9 @@ export namespace Ecs {
     class ComponentManager
     {
         ComponentId nextId{invalidId};
-        std::unordered_map<ComponentId, std::size_t> componentIdMap;
+        ankerl::unordered_dense::map<ComponentId, std::size_t, ankerl::unordered_dense::hash<ComponentId>> componentIdMap;
     public:
-        static ComponentManager* Instance()
+        inline static ComponentManager* Instance()
         {
             static ComponentManager* instance;
             [[unlikely]]
@@ -47,8 +48,8 @@ export namespace Ecs {
             ComponentId newComponentId = ++nextId;
             newComp.id = newComponentId;
             newComp.owningEntityId = ownerId;
-            components<std::remove_reference_t<compType>>.emplace_back(std::forward<compType>(newComp));
-            int lastIndex = components<compType>.size() - 1;
+            components<std::remove_reference_t<compType>>.push_back(std::move(newComp));
+            const int lastIndex = components<compType>.size() - 1;
 
             componentIdMap[newComponentId] = lastIndex;
             return newComponentId;
@@ -87,9 +88,9 @@ export namespace Ecs {
         ///1: The lifetime of this pointer is guaranteed only until destroyComponent is next called
         ///2: Using the wrong component type for the id is unchecked and undefined behaviour.
         template <ComponentType compType>
-        compType* getComponent(ComponentId id)
+        compType* getComponent(const ComponentId id)
         {
-            auto it = componentIdMap.find(id);
+            const auto it = componentIdMap.find(id);
             if (it == componentIdMap.end()) {
                 return nullptr;
             }
@@ -101,16 +102,16 @@ export namespace Ecs {
         //The call to std::swap memswaps the last element with the deleted one, potentially invalidating references.
         //To be safe it should be assumed that any call to destroyComponent invalidates ALL pointers from getComponent.
         template <ComponentType compType>
-        void destroyComponent(ComponentId idToDestroy)
+        void destroyComponent(const ComponentId idToDestroy)
         {
-            auto it = componentIdMap.find(idToDestroy);
+            const auto it = componentIdMap.find(idToDestroy);
             //If component doesn't exist, do nothing
             if (it == componentIdMap.end()) {
                 return;
             }
 
             int lastIndex = components<compType>.size() - 1;
-            ComponentId lastCompId = components<compType>[lastIndex].id;
+            const ComponentId lastCompId = components<compType>[lastIndex].id;
             int destroyedIndex = it->second;
 
             //In the event that we're destroying the last element, both of these operations are equivalent to a no-op, which

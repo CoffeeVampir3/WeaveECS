@@ -1,9 +1,19 @@
 module;
+#include "ankerl/unordered_dense.h"
 export module Entity;
 
 import std;
 import Component;
 import Logging;
+
+template <>
+struct ankerl::unordered_dense::hash<std::type_index> {
+    using is_avalanching = void;
+
+    [[nodiscard]] auto operator()(std::type_index const& type_idx) const noexcept -> uint64_t {
+        return hash<size_t>{}(type_idx.hash_code());
+    }
+};
 
 export namespace Ecs
 {
@@ -16,11 +26,11 @@ export namespace Ecs
     struct ArchetypeMap
     {
         static constexpr unsigned maximumRegisterableTypes = 64u;
-        std::unordered_map<std::type_index, BitsetUint> typeMap;
+        ankerl::unordered_dense::map<std::type_index, BitsetUint> typeMap;
         unsigned long long nextValue = 1;
         unsigned numRegisteredTypes = 0;
 
-        static ArchetypeMap* Instance()
+        inline static ArchetypeMap* Instance()
         {
             static ArchetypeMap* instance;
             [[unlikely]]
@@ -63,14 +73,14 @@ export namespace Ecs
         }
     };
 
-    using ComponentMap = std::unordered_map<std::type_index, ComponentId>;
+    using ComponentMap = ankerl::unordered_dense::map<std::type_index, ComponentId>;
 
     struct Entity;
     class EntityManager {
         ComponentId nextId = 0;
         ArchetypeMap archetypeMap;
         std::vector<Entity> entities;
-        std::unordered_map<EntityId, std::size_t> entityIdMap;
+        ankerl::unordered_dense::map<EntityId, std::size_t> entityIdMap;
 
         EntityManager() = default;
         EntityManager(const EntityManager&) = delete;
@@ -86,8 +96,6 @@ export namespace Ecs
         std::vector<Entity*> entitiesWith();
 
         void deleteEntity(EntityId idToDestroy);
-
-        ComponentMap& componentMap(EntityId id);
     };
 
     struct Entity {
@@ -101,7 +109,7 @@ export namespace Ecs
             auto newCompId = componentManager->addComponent(id, std::forward<compType>(newComponent));
             auto compTypeIndex = std::type_index(typeid(compType));
 
-            componentTypeMap[compTypeIndex] = newCompId;
+            componentTypeMap.emplace(compTypeIndex, newCompId);
             archetypeBits |= archetypeMap->registerType<compType>();
 
             return *this;
@@ -133,6 +141,7 @@ export namespace Ecs
             return archetypeBits;
         }
 
+        explicit Entity(const EntityId id) :id(id) {};
     private:
         EntityId id {0};
         BitsetUint archetypeBits {0};
@@ -146,18 +155,19 @@ export namespace Ecs
         if (instance == nullptr)
         {
             instance = new EntityManager();
+            instance->entityIdMap.reserve(1024*8);
+            instance->entities.reserve(1024*8);
         }
         return instance;
     }
 
     Entity& EntityManager::newEntity() {
-        EntityId newEntityId = ++nextId;
-        Entity newEntity;
-        newEntity.id = newEntityId;
-        entities.emplace_back(newEntity);
+        const EntityId newEntityId = ++nextId;
+        Entity ent(newEntityId);
+        entities.push_back(std::move(ent));
 
-        int lastIndex = entities.size() - 1;
-        entityIdMap[newEntityId] = lastIndex;
+        const int lastIndex = entities.size() - 1;
+        entityIdMap.emplace(newEntityId, lastIndex);
         return entities.back();
     }
 
@@ -175,28 +185,28 @@ export namespace Ecs
         {
             if ((entity.archetypeBits & archetypeBits) == archetypeBits)
             {
-                matchingEntities.emplace_back(&entity);
+                matchingEntities.push_back(&entity);
             }
         }
 
         return matchingEntities;
     }
 
-    void EntityManager::deleteEntity(EntityId idToDestroy) {
-        auto it = entityIdMap.find(idToDestroy);
+    void EntityManager::deleteEntity(const EntityId idToDestroy) {
+        const auto it = entityIdMap.find(idToDestroy);
         //If component doesn't exist, do nothing
         if (it == entityIdMap.end()) {
             return;
         }
 
-        int lastIndex = entities.size() - 1;
-        EntityId lastCompId = entities[lastIndex].id;
-        int destroyedIndex = it->second;
+        const int lastIndex = entities.size() - 1;
+        const EntityId lastCompId = entities[lastIndex].id;
+        const int destroyedIndex = it->second;
 
         //In the event that we're destroying the last element, both of these operations are equivalent to a no-op, which
         //means we do not need any conditional logic here.
         std::swap(entities[destroyedIndex], entities[lastIndex]);
-        entityIdMap[lastCompId] = destroyedIndex;
+        entityIdMap.emplace(lastCompId, destroyedIndex);
 
         entities.pop_back();
         entityIdMap.erase(idToDestroy);

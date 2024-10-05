@@ -16,8 +16,13 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS ON)
 
+#Profiling
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
+#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
+
 # Create the executable target
 add_executable(VulkanApp main.cpp)
+add_subdirectory(unordered_dense)
 
 file(GLOB_RECURSE MODULE_FILES 
     "${CMAKE_CURRENT_SOURCE_DIR}/Modules/*.ixx"
@@ -38,6 +43,8 @@ function(add_common_settings TARGET)
 endfunction()
 
 add_common_settings(VulkanApp)
+
+target_link_libraries(VulkanApp unordered_dense::unordered_dense)
 
 # Add compiler options to each compilation unit.
 get_property(TARGETS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY BUILDSYSTEM_TARGETS)
