@@ -35,8 +35,6 @@ function(add_common_settings TARGET)
     PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/Modules
   )
-  
-  target_compile_options(${TARGET} PRIVATE -fno-exceptions)
 endfunction()
 
 add_common_settings(VulkanApp)

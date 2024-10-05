@@ -33,8 +33,9 @@ export namespace Ecs
 
         template<typename T>
         BitsetUint registerType() {
-            if (numRegisteredTypes++ >= maximumRegisterableTypes) {
+            if (numRegisteredTypes >= maximumRegisterableTypes) {
                 Logging::failure("Attempted to register more components than bitset could deal with.");
+                std::abort();
             }
             std::type_index typeIdx(typeid(T));
             auto it = typeMap.find(typeIdx);
@@ -46,6 +47,7 @@ export namespace Ecs
             auto bitValue = nextValue;
             typeMap[typeIdx] = bitValue;
             nextValue <<= 1;
+            numRegisteredTypes++;
             return bitValue;
         }
 
@@ -69,6 +71,7 @@ export namespace Ecs
         ArchetypeMap archetypeMap;
         std::vector<Entity> entities;
         std::unordered_map<EntityId, std::size_t> entityIdMap;
+        //TODO:: @Z: Potentially want a better allocation strategy here to co-locate the component lookups.
         std::vector<ComponentMap> entityComponentMapLookupTable;
 
         EntityManager() = default;

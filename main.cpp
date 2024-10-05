@@ -51,15 +51,43 @@ int main() {
         .addComponent(Whale{.test = 25})
         .addComponent(Snail{.name = "f", .whaleRef = 5});
 
+    for (int i = 0; i < 1000000; i++)
+    {
+        EntityManager
+            ->newEntity()
+            .addComponent(Whale{.test = i})
+            .addComponent(Snail{.name = "f", .whaleRef = 5});
+    }
+
     std::print("three {}\n", three.ArchetypeBits());
 
     std::print("\n\n");
 
-    for (auto entity : EntityManager->entitiesWith<Whale, Snail, Cat>())
+    auto start = std::chrono::high_resolution_clock::now();
+    for (auto entity : EntityManager->entitiesWith<Whale, Snail>())
+    {
+        auto [whale, cat] = entity->components<Whale, Snail>();
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+    std::print("D: {}\n\n", duration);
+
+    start = std::chrono::high_resolution_clock::now();
+    for (auto entity : EntityManager->entitiesWith<Whale, Cat>())
     {
         auto [whale, cat] = entity->components<Whale, Cat>();
-        std::print("{} {}", whale->test, cat->name);
-        std::print("{}\n\n", entity->ArchetypeBits());
     }
+    end = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+    std::print("D: {}\n", duration);
+
+    start = std::chrono::high_resolution_clock::now();
+    for (auto entity : EntityManager->entitiesWith<Whale, Snail>())
+    {
+        auto [whale, cat] = entity->components<Whale, Snail>();
+    }
+    end = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+    std::print("D: {}", duration);
     return -1;
 }
