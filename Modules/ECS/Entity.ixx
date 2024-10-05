@@ -71,8 +71,6 @@ export namespace Ecs
         ArchetypeMap archetypeMap;
         std::vector<Entity> entities;
         std::unordered_map<EntityId, std::size_t> entityIdMap;
-        //TODO:: @Z: Potentially want a better allocation strategy here to co-locate the component lookups.
-        std::vector<ComponentMap> entityComponentMapLookupTable;
 
         EntityManager() = default;
         EntityManager(const EntityManager&) = delete;
@@ -98,8 +96,6 @@ export namespace Ecs
         template <ComponentType compType>
         Entity& addComponent(compType&& newComponent)
         {
-            const auto entityManager = EntityManager::Instance();
-            auto& componentTypeMap = entityManager->componentMap(id);
             const auto componentManager = ComponentManager::Instance();
             const auto archetypeMap = ArchetypeMap::Instance();
             auto newCompId = componentManager->addComponent(id, std::forward<compType>(newComponent));
@@ -114,8 +110,6 @@ export namespace Ecs
         template <ComponentType compType>
         compType* component()
         {
-            const auto entityManager = EntityManager::Instance();
-            auto& componentTypeMap = entityManager->componentMap(id);
             auto it = componentTypeMap.find(std::type_index(typeid(compType)));
             if (it == componentTypeMap.end()) {
                 return nullptr;
@@ -142,6 +136,7 @@ export namespace Ecs
     private:
         EntityId id {0};
         BitsetUint archetypeBits {0};
+        ComponentMap componentTypeMap;
     };
 
     EntityManager* EntityManager::Instance()
@@ -160,8 +155,6 @@ export namespace Ecs
         Entity newEntity;
         newEntity.id = newEntityId;
         entities.emplace_back(newEntity);
-
-        entityComponentMapLookupTable.emplace_back(ComponentMap());
 
         int lastIndex = entities.size() - 1;
         entityIdMap[newEntityId] = lastIndex;
@@ -203,17 +196,10 @@ export namespace Ecs
         //In the event that we're destroying the last element, both of these operations are equivalent to a no-op, which
         //means we do not need any conditional logic here.
         std::swap(entities[destroyedIndex], entities[lastIndex]);
-        std::swap(entityComponentMapLookupTable[destroyedIndex], entityComponentMapLookupTable[lastIndex]);
         entityIdMap[lastCompId] = destroyedIndex;
 
         entities.pop_back();
-        entityComponentMapLookupTable.pop_back();
         entityIdMap.erase(idToDestroy);
-    }
-
-    ComponentMap& EntityManager::componentMap(EntityId id)
-    {
-        return entityComponentMapLookupTable[entityIdMap[id]];
     }
 }
 

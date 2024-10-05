@@ -36,7 +36,7 @@ int main() {
         .addComponent(Snail{.name = "Swag", .whaleRef = 3})
         .addComponent(Cat{.name = "mat", .whaleRef = 3});
 
-    EntityManager->deleteEntity(two.Id());
+    // EntityManager->deleteEntity(two.Id());
 
     two = EntityManager
         ->newEntity()
