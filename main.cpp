@@ -34,7 +34,7 @@ int main() {
         .newEntity()
         .addComponent(Whale{.test = 15})
         .addComponent(Snail{.name = "Swag", .whaleRef = 3})
-        .addComponent(Cat{.name = "cat", .whaleRef = 3});
+        .addComponent(Cat{.name = "mat", .whaleRef = 3});
 
     std::print("two {}\n", two.ArchetypeBits());
 
@@ -47,10 +47,10 @@ int main() {
 
     std::print("\n\n");
 
-    for (auto entity : EntityManager.getEntitiesOf<Whale, Snail>())
+    for (auto entity : EntityManager.entitiesWith<Whale, Snail, Cat>())
     {
-        auto [whale, snail] = entity->getComponents<Whale, Snail>();
-        std::print("{} {}", whale->test, snail->name);
+        auto [whale, cat] = entity->components<Whale, Cat>();
+        std::print("{} {}", whale->test, cat->name);
         std::print("{}\n\n", entity->ArchetypeBits());
     }
     return -1;
